@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Save original brightness values and turn all LEDs on
+declare -A original_brightness
+
+for led in /sys/class/leds/*; do
+  if [ -f "$led/brightness" ]; then
+    # Save original brightness
+    original_brightness["$led"]=$(cat "$led/brightness")
+    # Turn LED on (may require root)
+    echo 1 | sudo tee "$led/brightness" > /dev/null
+  fi
+done
+
+echo "All LEDs activated! Press Enter to revert..."
+read
+
+# Restore original brightness
+for led in "${!original_brightness[@]}"; do
+  echo "${original_brightness[$led]}" | sudo tee "$led/brightness" > /dev/null
+done
+
+echo "LEDs restored to original state."
