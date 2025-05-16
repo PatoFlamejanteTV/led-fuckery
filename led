@@ -3,21 +3,31 @@
 # Save original brightness values and turn all LEDs on
 declare -A original_brightness
 
+echo "=== Saving original LED states and activating all LEDs ==="
+
 for led in /sys/class/leds/*; do
-  if [ -f "$led/brightness" ]; then
-    # Save original brightness
-    original_brightness["$led"]=$(cat "$led/brightness")
-    # Turn LED on (may require root)
-    echo 1 | sudo tee "$led/brightness" > /dev/null
-  fi
+    if [ -f "$led/brightness" ]; then
+        # Save original brightness
+        original_brightness["$led"]=$(cat "$led/brightness")
+        # Print LED name and original value
+        echo -n "LED: $(basename "$led") | Original: ${original_brightness["$led"]} "
+        # Turn LED on (may require root)
+        echo 1 | sudo tee "$led/brightness" > /dev/null
+        # Print new value
+        echo "→ New: $(cat "$led/brightness")"
+    fi
 done
 
-echo "All LEDs activated! Press Enter to revert..."
-read
+echo -e "\nAll LEDs activated! Press Enter to revert..."
+read -r
+
+echo -e "\n=== Restoring original LED states ==="
 
 # Restore original brightness
 for led in "${!original_brightness[@]}"; do
-  echo "${original_brightness[$led]}" | sudo tee "$led/brightness" > /dev/null
+    echo -n "LED: $(basename "$led") | Current: $(cat "$led/brightness") "
+    echo "${original_brightness[$led]}" | sudo tee "$led/brightness" > /dev/null
+    echo "→ Restored: $(cat "$led/brightness")"
 done
 
-echo "LEDs restored to original state."
+echo -e "\nAll LEDs restored to original state."
